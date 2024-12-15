@@ -4,8 +4,8 @@ import queue
 from ultralytics import YOLO
 import tkinter as tk
 
-# Muat model YOLOv8
-model = YOLO('model/best.pt')
+# Muat model 
+model = YOLO('best.pt')
 
 # Queue untuk menyimpan frame yang akan diproses
 frame_queue = queue.Queue(maxsize=1)
@@ -34,7 +34,9 @@ def process_frames():
     while True:
         if not frame_queue.empty():
             frame = frame_queue.get()
-            results = model.predict(frame, conf=0.5)
+
+            # Gunakan GPU untuk prediksi
+            results = model.predict(frame, conf=0.3, device='cuda')
             
             # Hitung jumlah objek "person" yang terdeteksi
             detected_count = sum(1 for obj in results[0].boxes if obj.cls == 0)  # Asumsi class 0 adalah "person"
@@ -78,7 +80,7 @@ def display_frame():
         cv2.imshow('Webcam - YOLOv8', annotated_frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
-        root.quit()  # Tutup aplikasi saat 'q' ditekan
+        root.quit()  
 
     root.after(10, display_frame)  # Panggil fungsi ini lagi setelah 10 ms
 

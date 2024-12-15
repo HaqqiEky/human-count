@@ -49,7 +49,8 @@ def process_frames():
 
             # Preprocess frame for TFLite model
             input_shape = input_details[0]['shape'][1:3]  # Input size (e.g., 640x640)
-            resized_frame = cv2.resize(frame, (input_shape[1], input_shape[0]))
+            frame_height, frame_width, _ = frame.shape
+            resized_frame = cv2.resize(frame, (input_shape[1], input_shape[0]))  # Resize to 640x640
             input_data = np.expand_dims(resized_frame, axis=0)  # Add batch dimension
             input_data = np.float32(input_data) / 255.0  # Normalize to [0, 1]
 
@@ -59,11 +60,14 @@ def process_frames():
 
             # Get detection results
             output_data = interpreter.get_tensor(output_details[0]['index'])  # Output tensor
-            boxes = output_data[0, :4, :]  # Bounding box coordinates
-            scores = output_data[0, 4, :]  # Confidence scores
+            output_data = np.squeeze(output_data)  # Remove batch dimension
+
+            # Parse detections
+            boxes = output_data[:4, :]  # Bounding box coordinates
+            scores = output_data[4, :]  # Confidence scores
 
             # Filter valid detections
-            threshold = 0.5
+            threshold = 0.4
             valid_detections = scores > threshold
             boxes = boxes[:, valid_detections]
             scores = scores[valid_detections]
@@ -74,11 +78,28 @@ def process_frames():
 
             # Annotate frame
             for i in range(boxes.shape[1]):
-                x_min, y_min, x_max, y_max = boxes[:, i]
-                x_min, x_max = int(x_min * frame.shape[1]), int(x_max * frame.shape[1])
-                y_min, y_max = int(y_min * frame.shape[0]), int(y_max * frame.shape[0])
+                # Convert bounding box format
+                x_center, y_center, width, height = boxes[:, i]
+                x_min = (x_center - width / 2) * input_shape[1]  # Scale to model input size
+                y_min = (y_center - height / 2) * input_shape[0]
+                x_max = (x_center + width / 2) * input_shape[1]
+                y_max = (y_center + height / 2) * input_shape[0]
+
+                # Scale bounding box to original frame size
+                x_min = int(x_min * (frame_width / input_shape[1]))
+                x_max = int(x_max * (frame_width / input_shape[1]))
+                y_min = int(y_min * (frame_height / input_shape[0]))
+                y_max = int(y_max * (frame_height / input_shape[0]))
+
+                # Clip coordinates to frame size
+                x_min = max(0, min(frame_width, x_min))
+                y_min = max(0, min(frame_height, y_min))
+                x_max = max(0, min(frame_width, x_max))
+                y_max = max(0, min(frame_height, y_max))
+
+                # Draw bounding box and confidence score
                 cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
-                cv2.putText(frame, f"Conf: {scores[i]:.2f}", (x_min, y_min - 10),
+                cv2.putText(frame, f"{scores[i]:.2f}", (x_min, y_min - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
             if not result_queue.full():
