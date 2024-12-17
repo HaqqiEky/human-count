@@ -5,7 +5,7 @@ from ultralytics import YOLO
 import tkinter as tk
 
 # Muat model 
-model = YOLO('best.pt')
+model = YOLO('best_s.pt')
 
 # Queue untuk menyimpan frame yang akan diproses
 frame_queue = queue.Queue(maxsize=1)
@@ -36,7 +36,7 @@ def process_frames():
             frame = frame_queue.get()
 
             # Gunakan GPU untuk prediksi
-            results = model.predict(frame, conf=0.3, device='cuda')
+            results = model.predict(frame, conf=0.3)
             
             # Hitung jumlah objek "person" yang terdeteksi
             detected_count = sum(1 for obj in results[0].boxes if obj.cls == 0)  # Asumsi class 0 adalah "person"
