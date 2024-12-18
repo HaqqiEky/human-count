@@ -5,7 +5,7 @@ from ultralytics import YOLO
 import tkinter as tk
 
 # Muat model 
-model = YOLO('best_s.pt')
+model = YOLO('best_s_3.pt')
 
 # Queue untuk menyimpan frame yang akan diproses
 frame_queue = queue.Queue(maxsize=1)
@@ -17,7 +17,7 @@ terminal_status = "Normal"  # Status terminal
 
 # Fungsi untuk menangkap frame dari webcam
 def capture_frames():
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(0)
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
@@ -36,7 +36,7 @@ def process_frames():
             frame = frame_queue.get()
 
             # Gunakan GPU untuk prediksi
-            results = model.predict(frame, conf=0.3)
+            results = model(frame, conf=0.8, iou=0.3, device="cuda" if model.device.type == "cuda" else "cpu")
             
             # Hitung jumlah objek "person" yang terdeteksi
             detected_count = sum(1 for obj in results[0].boxes if obj.cls == 0)  # Asumsi class 0 adalah "person"

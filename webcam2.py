@@ -4,10 +4,10 @@ from collections import deque
 import numpy as np
 
 # Load the YOLO model
-model = YOLO('best_s_2.pt')
+model = YOLO('best_s_3.pt')
 
 # Initialize webcam
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 
 # Check if the webcam is opened correctly
 if not cap.isOpened():
@@ -34,7 +34,7 @@ while True:
     frame_blurred = cv2.GaussianBlur(frame, (5, 5), 0)
 
     # Perform YOLO detection with adjusted confidence and IoU thresholds
-    results = model(frame_blurred, conf=0.3, iou=0.3)
+    results = model(frame_blurred, conf=0.6, iou=0.3)
 
     # Extract bounding boxes and classes
     boxes = results[0].boxes
