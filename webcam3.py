@@ -7,7 +7,7 @@ from ultralytics import YOLO
 import tkinter as tk
 
 # Muat model YOLO
-model = YOLO('best_s_3.pt')
+model = YOLO('best_s_4.pt')
 
 # Queue untuk frame dan hasil deteksi
 frame_queue = queue.Queue(maxsize=1)
@@ -25,12 +25,11 @@ phone_count = 0
 
 # Fungsi untuk menangkap frame dari webcam
 def capture_frames():
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
             break
-
         if not frame_queue.full():
             frame_queue.put(frame)
 
